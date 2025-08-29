@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -160,6 +161,24 @@ SortString hook_BYTES_bytes2string(SortBytes b) {
 
 SortBytes hook_BYTES_string2bytes(SortString s) {
   return hook_BYTES_bytes2string(s);
+}
+
+// Convert a bytes array to its hexadecimal string representation
+// For example, the bytes array b'\x01\xef' becomes the string "01ef"
+// syntax String ::= Bytes2Hex( Bytes )
+SortString hook_BYTES_bytes2hex(SortBytes b) {
+  static const std::array<char, 16> hexchars
+      = {'0', '1', '2', '3', '4', '5', '6', '7',
+         '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+  auto len_b = len(b);
+  auto *result
+      = static_cast<string *>(kore_alloc_token(sizeof(string) + len_b * 2));
+  for (size_t i = 0; i < len_b; i++) {
+    result->data[i * 2] = hexchars.at((b->data[i] >> 4) & 0xf);
+    result->data[i * 2 + 1] = hexchars.at(b->data[i] & 0xf);
+  }
+  init_with_len(result, len_b * 2);
+  return result;
 }
 
 SortBytes hook_BYTES_substr(SortBytes input, SortInt start, SortInt end) {
